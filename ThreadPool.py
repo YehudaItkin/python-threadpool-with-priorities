@@ -47,12 +47,12 @@ class Worker(Process):
             func, args, kwargs = self.tasks[i].q.get()
 
             try:
-                t = timeit.timeit(func(*args, **kwargs), number=1)
+                t = timeit.timeit(lambda: func(*args, **kwargs), number=1)
                 self.tasks[i].time.value += t
                 self.tasks[i].task_completed.value += 1
             except Exception as e:
                 self.tasks[i].order_lock.release()
-                self.logger.warning(e)
+                self.logger.warning("%s", e)
                 continue
 
             # end of critical section

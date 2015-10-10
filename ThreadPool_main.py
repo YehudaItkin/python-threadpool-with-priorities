@@ -7,7 +7,7 @@ from ThreadPool import ThreadPool
 if __name__ == '__main__':
 
     num_of_users = 2
-    num_of_process = num_of_users
+    num_of_process = num_of_users + 1
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%d/%m/%y %H:%M')
@@ -57,10 +57,12 @@ if __name__ == '__main__':
     pool.kill()
     pool.wait_completion()
 
+    sched = pool.scheduler
+
     logger.info('Real times:')
-    real_time = list(enumerate([task.time.value for task in pool.tasks]))
+    real_time = list(enumerate([task.time.value for task in sched.tasks]))
     logger.info(real_time)
-    task_completed = reduce(lambda res, task: res + task.task_completed.value, pool.tasks, 0)
+    task_completed = reduce(lambda res, task: res + task.task_completed.value, sched.tasks, 0)
     logger.info('Completed_tasks: %d from %d', task_completed, pool.tasks_submitted)
     logger.info('statistics for users: ')
 
@@ -71,4 +73,4 @@ if __name__ == '__main__':
         logger.info('\ttime of active work: %s', task.time.value)
 
 
-    [print_statistics(i, task) for i, task in enumerate(pool.tasks)]
+    [print_statistics(i, task) for i, task in enumerate(sched.tasks)]

@@ -1,10 +1,12 @@
-from multiprocessing import Queue, Process, Lock, Manager, Value
-import time, logging
-from random import randrange
+from multiprocessing import Queue, Process, Lock, Value
+import logging
 import timeit
+from Schedulers import Scheduler
+
 
 # Preventing DDOS. This number is arbitrary
 MAX_NUMBER_JOBS_IN_QUEUE = 1000
+
 
 
 class UsersQueue(object):
@@ -20,12 +22,13 @@ class UsersQueue(object):
 class Worker(Process):
     """Thread executing tasks from a given tasks queue"""
 
-    def __init__(self, tasks, killer):
+    def __init__(self, tasks, killer, scheduler):
         Process.__init__(self)
         self.tasks = tasks
         self.daemon = True
         self.killer = killer
         self.logger = logging.getLogger('Worker')
+        self.scheduler = scheduler
         self.start()
 
     def is_all_tasks_empty(self):
@@ -37,7 +40,7 @@ class Worker(Process):
     def run(self):
         while not self.killer.value or not self.is_all_tasks_empty():
 
-            i = randrange(len(self.tasks))
+            i = self.scheduler.schedule()
             self.tasks[i].order_lock.acquire()
             # Critical section
             if self.tasks[i].q.empty():
@@ -50,6 +53,7 @@ class Worker(Process):
                 t = timeit.timeit(lambda: func(*args, **kwargs), number=1)
                 self.tasks[i].time.value += t
                 self.tasks[i].task_completed.value += 1
+                self.scheduler.add_statistics(i, self.tasks[i])
             except Exception as e:
                 self.tasks[i].order_lock.release()
                 self.logger.warning("%s", e)
@@ -62,17 +66,19 @@ class Worker(Process):
 class ThreadPool:
     """Pool of threads consuming tasks from a queue"""
 
-    def __init__(self, num_threads, num_users):
+    def __init__(self, num_threads, num_users, sched_policy='default'):
         self.procs = []
         self.tasks = []
         self.num_users = num_users
         self.die = Value('b', False)
         self.tasks_submitted = 0
+        self.scheduler = Scheduler(sched_policy)
         for _ in range(num_users):
             self.tasks.append(UsersQueue(0))
+            self.scheduler.register_user(_)
 
         for _ in range(num_threads):
-            p = Worker(self.tasks, self.die)
+            p = Worker(self.tasks, self.die, self.scheduler)
             self.procs.append(p)
 
     def kill(self):

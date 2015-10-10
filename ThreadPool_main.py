@@ -1,5 +1,3 @@
-__author__ = 'yehuda'
-
 from multiprocessing import Process
 import time, logging
 from random import randrange

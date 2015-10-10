@@ -1,4 +1,3 @@
-__author__ = 'Yehuda (Igor) Itkin'
 from multiprocessing import Queue, Process, Lock, Manager, Value
 import time, logging
 from random import randrange
@@ -6,13 +5,6 @@ import timeit
 
 # Preventing DDOS. This number is arbitrary
 MAX_NUMBER_JOBS_IN_QUEUE = 1000
-
-
-def convert_to_full(func, *args, **kwargs):
-    def wrapped():
-        return func(*args, **kwargs)
-
-    return wrapped
 
 
 class UsersQueue(object):
@@ -53,9 +45,9 @@ class Worker(Process):
                 continue
 
             func, args, kwargs = self.tasks[i].q.get()
-            wrapped_func = convert_to_full(func, *args, **kwargs)
+
             try:
-                t = timeit.timeit(wrapped_func, number=1)
+                t = timeit.timeit(func(*args, **kwargs), number=1)
                 self.tasks[i].time.value += t
                 self.tasks[i].task_completed.value += 1
             except Exception as e:

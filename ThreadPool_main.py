@@ -1,6 +1,6 @@
-__author__ = 'Yehuda (Igor) Itkin'
+__author__ = 'yehuda'
 
-from multiprocessing import Queue, Process, Lock, Manager, Value
+from multiprocessing import Process
 import time, logging
 from random import randrange
 
@@ -74,8 +74,3 @@ if __name__ == '__main__':
 
 
     [print_statistics(i, task) for i, task in enumerate(pool.tasks)]
-
-
-
-
-

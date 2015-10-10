@@ -44,9 +44,9 @@ class Scheduler(object):
             self.logger.info('user %d:', user)
             logger.info('\ttask_submitted: %d', task.tasks_submitted.value)
             logger.info('\ttask_completed: %d', task.task_completed.value)
-            logger.info('\taverage_wait: %d', task.average_wait.value)
-            logger.info('\taverage_runtime: %d', task.average_runtime.value)
-            logger.info('\ttime of active work: %s', task.time.value)
+            logger.info('\taverage_wait: %f sec', task.average_wait.value)
+            logger.info('\taverage_runtime: %f sec', task.average_runtime.value)
+            logger.info('\ttime of active work: %f sec', task.time.value)
 
         [print_statistics(user, task, self.logger) for user, task in self.tasks.iteritems()]
 
@@ -65,7 +65,7 @@ class Scheduler(object):
         aw = self.tasks[user].average_wait.value
         lw = self.tasks[user].last_wait.value
         # very simple math :)) average(n+1) = (average[n])*n + t[n+]))/(n+1)
-        self.tasks[user].average_wait.value = (aw*tc + lw)/(tc + 1)
+        self.tasks[user].average_wait.value = (aw*tc + lw)/(tc + 1.0)
         self.tasks[user].sched_lock.release()
 
     def add_statistics_on_finish(self, user, time, finish_time):
@@ -76,7 +76,7 @@ class Scheduler(object):
         self.tasks[user].last_task_finished.value = finish_time
         avr = self.tasks[user].average_runtime.value
         tsc = self.tasks[user].task_completed.value
-        self.tasks[user].average_runtime.value = (avr*(tsc - 1) + time)/tsc
+        self.tasks[user].average_runtime.value = (avr*(tsc - 1.0) + time)/float(tsc)
         self.tasks[user].sched_lock.release()
 
     def schedule(self):

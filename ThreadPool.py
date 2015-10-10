@@ -11,9 +11,7 @@ MAX_NUMBER_JOBS_IN_QUEUE = 1000
 class UsersQueue(object):
     def __init__(self, maxsize=0):
         self.q = Queue(maxsize)
-        self.time = Value('d', 0)
-        self.tasks_submitted = Value('i', 0)
-        self.task_completed = Value('i', 0)
+        self.active_tasks = Value('i', 0)
         self.order_lock = Lock()
 
 
@@ -49,8 +47,7 @@ class Worker(Process):
 
             try:
                 t = timeit.timeit(lambda: func(*args, **kwargs), number=1)
-                self.tasks[i].time.value += t
-                self.tasks[i].task_completed.value += 1
+                self.tasks[i].active_tasks.value -= 1
                 self.scheduler.add_statistics_on_finish(i, t, time.time())
             except Exception as e:
                 # io is slow, so we want to rrelase the lock is
@@ -70,7 +67,6 @@ class ThreadPool:
         self.tasks = []
         self.num_users = num_users
         self.die = Value('b', False)
-        self.tasks_submitted = 0
         self.scheduler = Scheduler(sched_policy)
         for _ in range(num_users):
             self.tasks.append(UsersQueue(0))
@@ -87,10 +83,9 @@ class ThreadPool:
         """Add a task to the queue"""
 
         """Because MAX_NUMBER_JOBS_IN_QUEUE is aproximate, I dont use lock here"""
-        if not self.die.value and self.tasks[num].tasks_submitted.value < MAX_NUMBER_JOBS_IN_QUEUE:
+        if not self.die.value and self.tasks[num].active_tasks.value < MAX_NUMBER_JOBS_IN_QUEUE:
             self.tasks[num].q.put((func, args, kargs))
-            self.tasks_submitted += 1
-            self.tasks[num].tasks_submitted.value += 1
+            self.tasks[num].active_tasks.value += 1
         else:
             raise Exception('Unable to add task')
 

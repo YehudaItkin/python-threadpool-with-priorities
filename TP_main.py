@@ -6,7 +6,7 @@ from ThreadPool import ThreadPool
 
 if __name__ == '__main__':
 
-    num_of_users = 2
+    num_of_users = 10
     num_of_process = num_of_users + 1
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
@@ -21,13 +21,13 @@ if __name__ == '__main__':
         logger.info('sleeping for %d sec', d)
         time.sleep(d)
 
-    def producer(pool, user, delay, lifetime=60.0):
+    def producer(pool, user, delay, lifetime=180.0):
         logger = logging.getLogger('producer %d' % user)
         start_time = time.time()
         real_time_for_jobs = 0
         task_num = 0
         while time.time() - start_time < lifetime:
-            d = randrange(1, 10)  # sleep up to 10 sec
+            d = randrange(1, 30)  # sleep up to 10 sec
             try:
                 logger.info('Adding task: sleep for %d secs (task %d)', d, task_num)
                 pool.add_task(user, wait_delay, d, task_num)
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     producers = []
 
     for user in range(num_of_users):
-        base_time = 10.0  # the slowest user
+        base_time = 20.0  # the slowest user
         delay = base_time / (user + 1)
         p = Process(target=producer, args=(pool, user, delay,))
         producers.append(p)
@@ -57,21 +57,4 @@ if __name__ == '__main__':
     pool.kill()
     pool.wait_completion()
 
-    logger.info('Real times:')
-    real_time = list(enumerate([task.time.value for task in pool.tasks]))
-    logger.info(real_time)
-    task_completed = reduce(lambda res, task: res + task.task_completed.value, pool.tasks, 0)
-    logger.info('Completed_tasks: %d from %d', task_completed, pool.tasks_submitted)
-    logger.info('statistics for users: ')
-
-    def print_statistics(user, task):
-        logger.info('user %d:', user)
-        logger.info('\ttask_submitted: %d', task.tasks_submitted.value)
-        logger.info('\ttask_completed: %d', task.task_completed.value)
-        logger.info('\ttime of active work: %s', task.time.value)
-
-
-    [print_statistics(i, task) for i, task in enumerate(pool.tasks)]
-
-    logger.info('--------------------------------------')
     pool.scheduler.print_statistics()

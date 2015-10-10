@@ -1,6 +1,5 @@
 from multiprocessing import Queue, Process, Lock, Value
-import logging
-import timeit
+import logging, timeit, time
 from Schedulers import Scheduler
 
 
@@ -16,7 +15,6 @@ class UsersQueue(object):
         self.tasks_submitted = Value('i', 0)
         self.task_completed = Value('i', 0)
         self.order_lock = Lock()
-        self.sched_lock = Lock()
 
 
 class Worker(Process):
@@ -46,15 +44,16 @@ class Worker(Process):
             if self.tasks[i].q.empty():
                 self.tasks[i].order_lock.release()
                 continue
-
+            self.scheduler.add_statistic_on_start(i, time.time())
             func, args, kwargs = self.tasks[i].q.get()
 
             try:
                 t = timeit.timeit(lambda: func(*args, **kwargs), number=1)
                 self.tasks[i].time.value += t
                 self.tasks[i].task_completed.value += 1
-                self.scheduler.add_statistics(i, self.tasks[i])
+                self.scheduler.add_statistics_on_finish(i, t, time.time())
             except Exception as e:
+                # io is slow, so we want to rrelase the lock is
                 self.tasks[i].order_lock.release()
                 self.logger.warning("%s", e)
                 continue

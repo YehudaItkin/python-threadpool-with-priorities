@@ -6,8 +6,9 @@ from ThreadPool import ThreadPool
 
 if __name__ == '__main__':
 
-    num_of_users = 10
-    num_of_process = num_of_users + 1
+    num_of_users = 2
+    num_of_process = 3
+
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%d/%m/%y %H:%M')
@@ -21,13 +22,13 @@ if __name__ == '__main__':
         logger.info('sleeping for %d sec', d)
         time.sleep(d)
 
-    def producer(pool, user, delay, lifetime=180.0):
+    def producer(pool, user, delay, lifetime=60.0):
         logger = logging.getLogger('producer %d' % user)
         start_time = time.time()
         real_time_for_jobs = 0
         task_num = 0
         while time.time() - start_time < lifetime:
-            d = randrange(1, 30)  # sleep up to 10 sec
+            d = randrange(1, 10)  # sleep up to 10 sec
             try:
                 logger.info('Adding task: sleep for %d secs (task %d)', d, task_num)
                 pool.add_task(user, wait_delay, d, task_num)
@@ -41,7 +42,7 @@ if __name__ == '__main__':
 
     # 1) Init a Thread pool with the desired number of threads and number of users
     #    in the real world apps, the optimal number of threads = num_cores + 1
-    pool = ThreadPool(num_of_process, num_of_users)
+    pool = ThreadPool(num_of_process, num_of_users, queue_policy='single_task')
     producers = []
 
     for user in range(num_of_users):

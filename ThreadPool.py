@@ -7,12 +7,55 @@ from Schedulers import Scheduler
 MAX_NUMBER_JOBS_IN_QUEUE = 1000
 
 
+class SingleTaskLock(object):
+    """Lock Wrapper for single task policy"""
+
+    def __init__(self):
+        self.lock = Lock()
+
+    def acquire(self):
+        self.lock.acquire()
+
+    def release(self):
+        self.lock.release()
+
+    def single_task_release(self):
+        self.lock.release()
+
+    def multi_task_release(self):
+        pass
+
+
+class MultiTaskLock(object):
+    """Lock Wrapper for multi task policy"""
+
+    def __init__(self):
+        self.lock = Lock()
+
+    def acquire(self):
+        self.lock.acquire()
+
+    def release(self):
+        self.lock.release()
+
+    def single_task_release(self):
+        pass
+
+    def multi_task_release(self):
+        self.lock.release()
+
+
 
 class UsersQueue(object):
-    def __init__(self, maxsize=0):
+    def __init__(self, maxsize=0, policy='single_task'):
         self.q = Queue(maxsize)
         self.active_tasks = Value('i', 0)
-        self.order_lock = Lock()
+        if policy == 'single_task':
+            self.order_lock = SingleTaskLock()
+        elif policy == 'multi_task':
+            self.order_lock = MultiTaskLock()
+        else:
+            raise Exception('No policy!!')
 
 
 class Worker(Process):
@@ -35,41 +78,45 @@ class Worker(Process):
 
     def run(self):
         while not self.killer.value or not self.is_all_tasks_empty():
-
             i = self.scheduler.schedule()
             self.tasks[i].order_lock.acquire()
             # Critical section
             if self.tasks[i].q.empty():
                 self.tasks[i].order_lock.release()
                 continue
+            self.logger.debug('Starting task %d', i)
             self.scheduler.add_statistic_on_start(i, time.time())
             func, args, kwargs = self.tasks[i].q.get()
-
+            self.tasks[i].order_lock.multi_task_release()
             try:
                 t = timeit.timeit(lambda: func(*args, **kwargs), number=1)
                 self.tasks[i].active_tasks.value -= 1
                 self.scheduler.add_statistics_on_finish(i, t, time.time())
+                self.logger.debug('Finished task %d', i)
             except Exception as e:
                 # io is slow, so we want to rrelase the lock is
-                self.tasks[i].order_lock.release()
+                self.tasks[i].order_lock.single_task_release()
                 self.logger.warning("%s", e)
                 continue
 
-            # end of critical section
-            self.tasks[i].order_lock.release()
+            # end of critical section for single task policy
+            self.tasks[i].order_lock.single_task_release()
 
 
 class ThreadPool:
     """Pool of threads consuming tasks from a queue"""
 
-    def __init__(self, num_threads, num_users, sched_policy='default'):
+    def __init__(self, num_threads, num_users, sched_policy='default', queue_policy='single_task'):
+        self.logger = logging.getLogger('ThreadPool')
         self.procs = []
         self.tasks = []
         self.num_users = num_users
         self.die = Value('b', False)
         self.scheduler = Scheduler(sched_policy)
+        self.logger.info('%s policy choosen for scheduling', sched_policy)
+        self.logger.info('%s policy choosen for queue', queue_policy)
         for _ in range(num_users):
-            self.tasks.append(UsersQueue(0))
+            self.tasks.append(UsersQueue(0, queue_policy))
             self.scheduler.register_user(_)
 
         for _ in range(num_threads):

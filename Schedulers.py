@@ -28,17 +28,9 @@ class Scheduler(object):
     def __init__(self, sched_policy):
         self.logger = logging.getLogger('scheduler')
         self.sched_policy = sched_policies[sched_policy]
-        self.logger.info('%s policy choosen for scheduling', sched_policy)
         self.tasks = {}
 
     def print_statistics(self):
-
-        self.logger.info('Real times:')
-        real_time = [(user, task.time.value) for user, task in self.tasks.iteritems()]
-        self.logger.info(real_time)
-        task_completed = reduce(lambda res, task: res + task.task_completed.value, self.tasks.values(), 0)
-        self.logger.info('Completed_tasks: %d', task_completed)
-        self.logger.info('statistics for users: ')
 
         def print_statistics(user, task, logger):
             self.logger.info('user %d:', user)
@@ -48,7 +40,23 @@ class Scheduler(object):
             logger.info('\taverage_runtime: %f sec', task.average_runtime.value)
             logger.info('\ttime of active work: %f sec', task.time.value)
 
+        self.logger.info('statistics for users: ')
         [print_statistics(user, task, self.logger) for user, task in self.tasks.iteritems()]
+
+        print '--------------------------------------------'
+        self.logger.info('Average for pool:')
+        num_users = len(self.tasks)
+        task_submitted = reduce(lambda res, task: res + task.tasks_submitted.value, self.tasks.values(), 0)
+        task_completed = reduce(lambda res, task: res + task.task_completed.value, self.tasks.values(), 0)
+        av_wait = reduce(lambda res, task: res + task.average_wait.value, self.tasks.values(), 0)/num_users
+        av_time = reduce(lambda res, task: res + task.average_runtime.value, self.tasks.values(), 0)/num_users
+        av_active = reduce(lambda res, task: res + task.time.value, self.tasks.values(), 0)/num_users
+
+        self.logger.info('\ttask_submitted: %d', task_submitted)
+        self.logger.info('\ttask_completed: %d', task_completed)
+        self.logger.info('\taverage_wait: %f sec', av_wait)
+        self.logger.info('\taverage_task_runtime: %f sec', av_time)
+        self.logger.info('\ttime of active work: %f sec', av_active)
 
     def register_user(self, user):
         t = Task(user)

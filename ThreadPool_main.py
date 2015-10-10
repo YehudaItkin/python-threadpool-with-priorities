@@ -60,9 +60,9 @@ if __name__ == '__main__':
     sched = pool.scheduler
 
     logger.info('Real times:')
-    real_time = list(enumerate([task.time.value for task in sched.tasks]))
+    real_time = [(user, task.time.value) for user, task in sched.tasks.iteritems()]
     logger.info(real_time)
-    task_completed = reduce(lambda res, task: res + task.task_completed.value, sched.tasks, 0)
+    task_completed = reduce(lambda res, task: res + task.task_completed.value, sched.tasks.values(), 0)
     logger.info('Completed_tasks: %d from %d', task_completed, pool.tasks_submitted)
     logger.info('statistics for users: ')
 
@@ -73,4 +73,4 @@ if __name__ == '__main__':
         logger.info('\ttime of active work: %s', task.time.value)
 
 
-    [print_statistics(i, task) for i, task in enumerate(sched.tasks)]
+    [print_statistics(user, task) for user, task in sched.tasks.iteritems()]

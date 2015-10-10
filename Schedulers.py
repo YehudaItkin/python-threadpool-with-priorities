@@ -16,7 +16,9 @@ class Task(object):
         self.time = Value('d', 0)
         self.tasks_submitted = Value('i', 0)
         self.task_completed = Value('i', 0)
-
+        self.last_task_finished = Value('i', 0)
+        self.average_wait_time = Value('i', 0)
+        self.priority = 0
 
 class Scheduler(object):
     def __init__(self, sched_policy):
@@ -34,9 +36,9 @@ class Scheduler(object):
 
     def add_statistics(self, user, task):
         task.sched_lock.acquire()
-        self.tasks[user].tasks_submitted = task.tasks_submitted
-        self.tasks[user].task_completed = task.task_completed
-        self.tasks[user].time = task.time
+        self.tasks[user].tasks_submitted.value = task.tasks_submitted.value
+        self.tasks[user].task_completed.value = task.task_completed.value
+        self.tasks[user].time.value = task.time.value
         task.sched_lock.release()
 
     def schedule(self):

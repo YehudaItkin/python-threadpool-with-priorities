@@ -8,10 +8,12 @@ There are a lot of definitions of fairness available. For my purposes - fair sch
 minimum average wait time (i.e time between task put in queue and the time it begins to run)
 
 For now, there are:
-random_scheduler - choose random user
-average_runtime_scheduler - choose user with min average runtime
-average_wait_scheduler - choose user with max wait
-max_waittime_scheduler - choose user with a longest wait
+1) random_scheduler - choose random user
+2) average_runtime_scheduler - choose user with min average runtime
+3) average_wait_scheduler - choose user with max wait
+4) max_waittime_scheduler - choose user with a longest wait
+5) dirty_wait_scheduler - very close to max_waittime_scheduler, but counters updated on every iteration. I think its
+the best one.
 Those polices are not optimal (for a best result, several factors should be accounted), but its interesting to
 compare them.
 Task is chosen in O(n), that should be problem, when number of users is big
@@ -30,12 +32,19 @@ SINGLE_TASK_POLICY (one by one)
 
 1) random:
     average_wait: 6.786567 sec
+
 2) average_runtime_scheduler
     average_wait: 3.499203 sec
+
 3)max_waittime_scheduler
     average_wait: 3.505503 sec
+
 4) max_waittime_scheduler
     average_wait: 3.745365 sec
+
+5) dirty_wait_scheduler
+    average_wait: 3.495588 sec
+
 
 MULTI_TASK_POLICY (many task at once)
 1) random:
@@ -49,6 +58,9 @@ MULTI_TASK_POLICY (many task at once)
 
 4) max_waittime_scheduler
     average_wait: 3.204754 sec
+
+5) dirty_wait_scheduler
+    average_wait: 3.683024
 
 
 

@@ -12,7 +12,7 @@ def average_runtime_scheduler(self):
     # but it doesnt bother us. Process with lower runtime still will have higher priorities
     min_avg = float('inf')
     # if all the ques are empty or working return the first user
-    min_user = self.tasks.keys()[0]
+    min_user = random.randrange(len(self.tasks))
     for user, task in self.tasks.iteritems():
         if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
                 if task.average_runtime.value < min_avg:
@@ -24,18 +24,44 @@ def average_runtime_scheduler(self):
 
 def average_wait_scheduler(self):
     """Choose the user with maximum average wait"""
+
     # During the search minimal average runtime can change (I dont take global lock on queues)
-    # but it doesnt bother us. Process with lower runtime still will have higher priorities
-    max_avg = 0
+    # but it doesnt bother us. Process with lower higher wait will have higher priorities
+    # Indeed this scheduler is a bad idea. The process with low waittime will never run
+    # and has no chances to change this waittime.
+    # Th e solution is - update waittime on every iteration of scheduling. Thats done in
+    # dirty wait scheduler
+    max_avg = 0.0
     # if all the ques are empty or working return the first user
-    user = self.tasks.keys()[0]
+    user = random.randrange(len(self.tasks))
     for u, task in self.tasks.iteritems():
         if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
-                if task.average_wait.value > max_avg:
-                    user = u
-                    max_avg = task.average_wait.value
-                task.queue.order_lock.release()
+            if task.average_wait.value > max_avg:
+                user = u
+                max_avg = task.average_wait.value
+            task.queue.order_lock.release()
     return user
+
+def dirty_wait_scheduler(self):
+    """Choose the user with maximum average wait"""
+
+    # During the search minimal average runtime can change (I dont take global lock on queues)
+    # but it doesnt bother us. Process with lower higher wait will have higher priorities
+    # Indeed this scheduler is a bad idea. The process with low waittime will never run
+    # and has no chances to change this waittime.
+    # Th e solution is - update waittime on every iteration of scheduling. Thats done in
+    # dirty wait scheduler
+    max_avg = 0.0
+    # if all the ques are empty or working return the first user
+    user = random.randrange(len(self.tasks))
+    for u, task in self.tasks.iteritems():
+        if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
+            if task.dirty_wait.value > max_avg:
+                user = u
+                max_avg = task.dirty_wait.value
+            task.queue.order_lock.release()
+    return user
+
 
 
 def max_waittime_scheduler(self):
@@ -44,7 +70,7 @@ def max_waittime_scheduler(self):
     # but it doesnt bother us. Process with lower runtime still will have higher priorities
     max_time = float('inf')
     # if all the ques are empty or working return the first user
-    user = self.tasks.keys()[0]
+    user = random.randrange(len(self.tasks))
     for u, task in self.tasks.iteritems():
         if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
                 if task.last_task_finished.value < max_time:
@@ -58,7 +84,8 @@ sched_policies = {'default': random_scheduler,
                   'random': random_scheduler,
                   'average_runtime_scheduler': average_runtime_scheduler,
                   'average_wait_scheduler': average_wait_scheduler,
-                  'max_waittime_scheduler': max_waittime_scheduler
+                  'max_waittime_scheduler': max_waittime_scheduler,
+                  'dirty_wait_scheduler': dirty_wait_scheduler
                   }
 
 
@@ -70,9 +97,11 @@ class Task(object):
         self.tasks_submitted = Value('i', 0)
         self.task_completed = Value('i', 0)
         self.last_task_finished = Value('d', time.time())
-        self.average_wait = Value('d', 0.0)
+        self.average_wait = Value('d', random.randrange(1,10)/10.0) # the only way for average_wait_scheduler to work
         self.average_runtime = Value('d', 0.0)
-        self.last_wait = Value('d', 0.0)
+        self.dirty_wait = Value('d', 0) # wait also when queue is empty
+        self.av_dirty_wait = Value('d', 0) # wait also when queue is empty
+        self.last_wait = Value('d', random.randrange(1,10)/10.0)
         self.priority = Value('d', 0.0)
 
 
@@ -89,6 +118,14 @@ class Scheduler(object):
 
     def unregister_user(self):
         pass
+
+    def update_statistics(self, time):
+        self.global_scheduler_lock.acquire()
+        for task in self.tasks.values():
+            if task.queue.order_lock.acquire(False):
+                task.dirty_wait.value = time - task.last_task_finished.value
+                task.queue.order_lock.release()
+        self.global_scheduler_lock.release()
 
     def add_statistic_on_start(self, user, start_time):
         self.global_scheduler_lock.acquire()

@@ -20,7 +20,7 @@ if __name__ == '__main__':
     sched_policy = args.scheduler_policy
     queue_policy = args.queue_policy
 
-    #sched_policy = 'max_waittime_scheduler'
+    sched_policy = 'dirty_wait_scheduler'
     queue_policy = 'multi_task'
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
@@ -54,7 +54,6 @@ if __name__ == '__main__':
 
 
     # 1) Init a Thread pool with the desired number of threads and number of users
-    #    in the real world apps, the optimal number of threads = num_cores + 1
     pool = ThreadPool(num_of_process, num_of_users, sched_policy, queue_policy)
     producers = []
 

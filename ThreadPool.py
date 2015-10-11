@@ -77,6 +77,7 @@ class Worker(Process):
 
     def run(self):
         while not self.killer.value or not self.is_all_tasks_empty():
+            self.scheduler.update_statistics(time.time())
             i = self.scheduler.schedule()
             self.tasks[i].order_lock.acquire()
             # Critical section

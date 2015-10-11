@@ -56,18 +56,26 @@ So there are two schedulers that are much better then random -  dirty_wait_sched
 MULTI_TASK_POLICY (many task at once)
 1) random:
     average_wait: 3.688634 sec
+    difference between fastest and slowest procs: 5.971199 sec
 
 2) average_runtime_scheduler
     average_wait: 4.124542 sec
+    difference between fastest and slowest procs: 8.564545 sec
 
-3) max_waittime_scheduler
+3) average_wait_scheduler
     average_wait: 3.500654 sec
+    difference between fastest and slowest procs: 7.223396 sec
 
 4) max_waittime_scheduler
     average_wait: 3.204754 sec
+    difference between fastest and slowest procs: 8.148414 sec
 
 5) dirty_wait_scheduler
     average_wait: 3.683024
+    difference between fastest and slowest procs: 8.186353 sec
+
+    Result is a little bit funny - random sched. is the faster one. May be its because random scheduler doesnt
+    use locks.
 
 
 

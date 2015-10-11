@@ -21,7 +21,7 @@ if __name__ == '__main__':
     queue_policy = args.queue_policy
     user_lifetime = args.user_lifetime
 
-    sched_policy = 'dirty_wait_scheduler'
+    #sched_policy = 'average_runtime_scheduler'
     queue_policy = 'single_task'
 
     logging.basicConfig(level=logging.DEBUG,

@@ -33,22 +33,25 @@ SINGLE_TASK_POLICY (one by one)
 
 1) random:
     average_wait: 6.786567 sec
-    difference between slow and fast thread:
+    difference between fastest and slowest procs: 15.851191 sec
 
 2) average_runtime_scheduler
     average_wait: 3.499203 sec
+    difference between fastest and slowest procs: 19.657294 sec
 
 3) average_wait_scheduler
     average_wait: 4.882710 sec
-    difference between slow and fast procs: 46.714038 sec (Very unfair guy)
+    difference between fastest and slowest procs: 46.714038 sec (Very unfair guy)
 
 4) max_waittime_scheduler
     average_wait: 3.745365 sec
-    difference between slow and fast procs: 6.844226 sec
+    difference between fastest and slowest procs: 6.844226 sec
 
 5) dirty_wait_scheduler
     average_wait: 3.495588 sec
+    difference between fastest and slowest procs: 9.282777 sec
 
+So there are two schedulers that are much better then random -  dirty_wait_scheduler and max_waittime_scheduler
 
 MULTI_TASK_POLICY (many task at once)
 1) random:

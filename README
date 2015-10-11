@@ -77,7 +77,8 @@ MULTI_TASK_POLICY (many task at once)
     Result is a little bit funny - random sched. is the faster one. May be its because random scheduler doesnt
     use locks.
 
-p.s. most of code was written between 2 and 5 am. So this code can crash your car, kill your dog or drink your bear. 
+p.s. most of code was written between 2 and 5 am. So this code can crash your car, kill your dog or drink your beer.
+Well, I really cant imagine what else it able to do
 
 
 

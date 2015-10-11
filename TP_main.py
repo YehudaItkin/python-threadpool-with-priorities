@@ -1,13 +1,24 @@
 from multiprocessing import Process
 import time, logging
 from random import randrange
+import argparse
+from Schedulers import sched_policies
 
 from ThreadPool import ThreadPool
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='ThreadPool parser')
+    parser.add_argument('-u', '--number_of_users', type=int, default=5)
+    parser.add_argument('-p', '--number_of_process', type=int, default=5)
+    parser.add_argument('--scheduler_policy', choices=sched_policies.keys(), default='default')
+    parser.add_argument('--queue_policy', choices=['single_task', 'multi_task'], default='single_task')
+    parser.add_argument('--user_lifetime', type=float, default=60.0)
+    args = parser.parse_args()
 
-    num_of_users = 2
-    num_of_process = 3
+    num_of_users = args.number_of_users
+    num_of_process = args.number_of_process
+    sched_policy = args.scheduler_policy
+    queue_policy = args.queue_policy
 
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
@@ -42,7 +53,7 @@ if __name__ == '__main__':
 
     # 1) Init a Thread pool with the desired number of threads and number of users
     #    in the real world apps, the optimal number of threads = num_cores + 1
-    pool = ThreadPool(num_of_process, num_of_users, queue_policy='single_task')
+    pool = ThreadPool(num_of_process, num_of_users, sched_policy, queue_policy)
     producers = []
 
     for user in range(num_of_users):

@@ -19,9 +19,11 @@ if __name__ == '__main__':
     num_of_process = args.number_of_process
     sched_policy = args.scheduler_policy
     queue_policy = args.queue_policy
+    user_lifetime = args.user_lifetime
 
-    sched_policy = 'average_wait_scheduler'
+    sched_policy = 'dirty_wait_scheduler'
     queue_policy = 'single_task'
+
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%d/%m/%y %H:%M')
@@ -35,7 +37,7 @@ if __name__ == '__main__':
         logger.info('sleeping for %d sec', d)
         time.sleep(d)
 
-    def producer(pool, user, delay, lifetime=60.0):
+    def producer(pool, user, delay, lifetime=user_lifetime):
         logger = logging.getLogger('producer %d' % user)
         start_time = time.time()
         real_time_for_jobs = 0

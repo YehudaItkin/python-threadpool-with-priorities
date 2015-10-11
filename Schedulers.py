@@ -184,4 +184,7 @@ class Scheduler(object):
         self.logger.info('\taverage_task_runtime: %f sec', av_time)
         self.logger.info('\ttime of active work: %f sec', av_active)
 
+        diff = self.tasks[0].average_wait.value - self.tasks[num_users - 1].average_wait.value
+        self.logger.info('\tdifference between slow and fast procs: %f sec', diff)
+
 

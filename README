@@ -5,7 +5,8 @@ User tasks are started or one by one (single_task queue policy) or many at once 
 Scheduler is not preemptive (task cannot be send to sleep)
 Aim is two compare different scheduling polices
 There are a lot of definitions of fairness available. For my purposes - fair scheduling is the scheduling with
-minimum average wait time (i.e time between task put in queue and the time it begins to run)
+minimum average wait time (i.e time between task put in queue and the time it begins to run), Also I an interested
+in difference between the processes with fastest and slowest submission rate
 
 For now, there are:
 1) random_scheduler - choose random user
@@ -32,15 +33,18 @@ SINGLE_TASK_POLICY (one by one)
 
 1) random:
     average_wait: 6.786567 sec
+    difference between slow and fast thread:
 
 2) average_runtime_scheduler
     average_wait: 3.499203 sec
 
-3)max_waittime_scheduler
+3) average_wait_scheduler
     average_wait: 4.882710 sec
+    difference between slow and fast procs: 46.714038 sec (Very unfair guy)
 
 4) max_waittime_scheduler
     average_wait: 3.745365 sec
+    difference between slow and fast procs: 6.844226 sec
 
 5) dirty_wait_scheduler
     average_wait: 3.495588 sec

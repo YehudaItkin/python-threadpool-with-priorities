@@ -1,0 +1,56 @@
+# python-threadpool-with-priorities
+Realisation of very simple ThreadPool with priorities
+Several scheduling polices are available
+User tasks are started or one by one (single_task queue policy) or many at once (multi_task queue policy)
+Scheduler is not preemptive (task cannot be send to sleep)
+Aim is two compare different scheduling polices
+There are a lot of definitions of fairness available. For my purposes - fair scheduling is the scheduling with
+minimum average wait time (i.e time between task put in queue and the time it begins to run)
+
+For now, there are:
+random_scheduler - choose random user
+average_runtime_scheduler - choose user with min average runtime
+average_wait_scheduler - choose user with max wait
+max_waittime_scheduler - choose user with a longest wait
+Those polices are not optimal (for a best result, several factors should be accounted), but its interesting to
+compare them.
+Task is chosen in O(n), that should be problem, when number of users is big
+
+Tests with single_task policy were done on 10 users/5 processes (starvation)
+Tests with multi_task policy were done on 10 users/20 processes
+Every user sends request with rate 20/(user_number + 1) (i.e user #10 will send request every two seconds)
+Every user send its requests during one minute (indeed its not enough for a good statistics, but its too early in the morning now)
+Jobs are just time.sleep(random.randomize(1:30))
+Configuration: 4*i7 + hyperthreading/16GB RAM
+
+Results:
+task_completed: 165
+Approximate run time ~3 min
+SINGLE_TASK_POLICY (one by one)
+
+1) random:
+    average_wait: 6.786567 sec
+2) average_runtime_scheduler
+    average_wait: 3.499203 sec
+3)max_waittime_scheduler
+    average_wait: 3.505503 sec
+4) max_waittime_scheduler
+    average_wait: 3.745365 sec
+
+MULTI_TASK_POLICY (many task at once)
+1) random:
+    average_wait: 3.688634 sec
+
+2) average_runtime_scheduler
+    average_wait: 4.124542 sec
+
+3) max_waittime_scheduler
+    average_wait: 3.500654 sec
+
+4) max_waittime_scheduler
+    average_wait: 3.204754 sec
+
+
+
+
+

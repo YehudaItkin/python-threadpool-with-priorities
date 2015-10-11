@@ -13,8 +13,8 @@ class SingleTaskLock(object):
     def __init__(self):
         self.lock = Lock()
 
-    def acquire(self):
-        self.lock.acquire()
+    def acquire(self, block=True, timeout=None):
+        return self.lock.acquire(block, timeout)
 
     def release(self):
         self.lock.release()
@@ -32,8 +32,8 @@ class MultiTaskLock(object):
     def __init__(self):
         self.lock = Lock()
 
-    def acquire(self):
-        self.lock.acquire()
+    def acquire(self, block=True, timeout=None):
+        return self.lock.acquire(block, timeout)
 
     def release(self):
         self.lock.release()
@@ -43,7 +43,6 @@ class MultiTaskLock(object):
 
     def multi_task_release(self):
         self.lock.release()
-
 
 
 class UsersQueue(object):
@@ -82,6 +81,7 @@ class Worker(Process):
             self.tasks[i].order_lock.acquire()
             # Critical section
             if self.tasks[i].q.empty():
+                # lock should be freed in both cases
                 self.tasks[i].order_lock.release()
                 continue
             self.logger.debug('Starting task %d', i)
@@ -94,7 +94,7 @@ class Worker(Process):
                 self.scheduler.add_statistics_on_finish(i, t, time.time())
                 self.logger.debug('Finished task %d', i)
             except Exception as e:
-                # io is slow, so we want to rrelase the lock is
+                # io is slow, so we want to release the lock before
                 self.tasks[i].order_lock.single_task_release()
                 self.logger.warning("%s", e)
                 continue
@@ -110,14 +110,16 @@ class ThreadPool:
         self.logger = logging.getLogger('ThreadPool')
         self.procs = []
         self.tasks = []
-        self.num_users = num_users
+        self.num_user = num_users
+        self.users = range(num_users)
         self.die = Value('b', False)
         self.scheduler = Scheduler(sched_policy)
         self.logger.info('%s policy choosen for scheduling', sched_policy)
         self.logger.info('%s policy choosen for queue', queue_policy)
-        for _ in range(num_users):
-            self.tasks.append(UsersQueue(0, queue_policy))
-            self.scheduler.register_user(_)
+        for _ in self.users:
+            q = UsersQueue(0, queue_policy)
+            self.tasks.append(q)
+            self.scheduler.register_user(_, q)
 
         for _ in range(num_threads):
             p = Worker(self.tasks, self.die, self.scheduler)

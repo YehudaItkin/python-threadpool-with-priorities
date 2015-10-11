@@ -5,14 +5,67 @@ import random, logging, time
 def random_scheduler(self):
     return random.randrange(len(self.tasks))
 
+
+def average_runtime_scheduler(self):
+    """Choose the user with minimal runtime"""
+    # During the search minimal average runtime can change (I dont take global lock on queues)
+    # but it doesnt bother us. Process with lower runtime still will have higher priorities
+    min_avg = float('inf')
+    # if all the ques are empty or working return the first user
+    min_user = self.tasks.keys()[0]
+    for user, task in self.tasks.iteritems():
+        if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
+                if task.average_runtime.value < min_avg:
+                    min_user = user
+                    min_avg = task.average_runtime.value
+                task.queue.order_lock.release()
+    return min_user
+
+
+def average_wait_scheduler(self):
+    """Choose the user with maximum average wait"""
+    # During the search minimal average runtime can change (I dont take global lock on queues)
+    # but it doesnt bother us. Process with lower runtime still will have higher priorities
+    max_avg = 0
+    # if all the ques are empty or working return the first user
+    user = self.tasks.keys()[0]
+    for u, task in self.tasks.iteritems():
+        if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
+                if task.average_wait.value > max_avg:
+                    user = u
+                    max_avg = task.average_wait.value
+                task.queue.order_lock.release()
+    return user
+
+
+def max_waittime_scheduler(self):
+    """Choose the user that waits longest time"""
+    # During the search minimal average runtime can change (I dont take global lock on queues)
+    # but it doesnt bother us. Process with lower runtime still will have higher priorities
+    max_time = float('inf')
+    # if all the ques are empty or working return the first user
+    user = self.tasks.keys()[0]
+    for u, task in self.tasks.iteritems():
+        if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
+                if task.last_task_finished.value < max_time:
+                    user = u
+                    max_time = task.last_task_finished.value
+                task.queue.order_lock.release()
+    return user
+
+
 sched_policies = {'default': random_scheduler,
                   'random': random_scheduler,
+                  'average_runtime_scheduler': average_runtime_scheduler,
+                  'average_wait_scheduler': average_wait_scheduler,
+                  'max_waittime_scheduler': max_waittime_scheduler
                   }
 
 
 class Task(object):
-    def __init__(self, user):
+    def __init__(self, user, queue):
         self.user = user
+        self.queue = queue
         self.time = Value('d', 0)
         self.tasks_submitted = Value('i', 0)
         self.task_completed = Value('i', 0)
@@ -21,7 +74,6 @@ class Task(object):
         self.average_runtime = Value('d', 0.0)
         self.last_wait = Value('d', 0.0)
         self.priority = Value('d', 0.0)
-        self.sched_lock = Lock()
 
 
 class Scheduler(object):
@@ -29,6 +81,43 @@ class Scheduler(object):
         self.logger = logging.getLogger('scheduler')
         self.sched_policy = sched_policies[sched_policy]
         self.tasks = {}
+        self.global_scheduler_lock = Lock()
+
+    def register_user(self, user, queue):
+        # dictionary is thread safe. No lock here
+        self.tasks[user] = Task(user, queue)
+
+    def unregister_user(self):
+        pass
+
+    def add_statistic_on_start(self, user, start_time):
+        self.global_scheduler_lock.acquire()
+        self.tasks[user].tasks_submitted.value += 1
+        self.tasks[user].last_wait.value = start_time - self.tasks[user].last_task_finished.value
+        tc = self.tasks[user].task_completed.value
+        aw = self.tasks[user].average_wait.value
+        lw = self.tasks[user].last_wait.value
+        # very simple math :)) average(n+1) = (average[n])*n + t[n+]))/(n+1)
+        self.tasks[user].average_wait.value = (aw*tc + lw)/(tc + 1.0)
+        self.global_scheduler_lock.release()
+
+    def add_statistics_on_finish(self, user, time, finish_time):
+        pass
+        self.global_scheduler_lock.acquire()
+        self.tasks[user].task_completed.value += 1
+        self.tasks[user].time.value += time
+        self.tasks[user].last_task_finished.value = finish_time
+        avr = self.tasks[user].average_runtime.value
+        tsc = self.tasks[user].task_completed.value
+        # very simple math :)) average(n+1) = (average[n])*n + t[n+]))/(n+1)
+        self.tasks[user].average_runtime.value = (avr*(tsc - 1.0) + time)/float(tsc)
+        self.global_scheduler_lock.release()
+
+    def schedule(self):
+        self.global_scheduler_lock.acquire()
+        user = self.sched_policy(self)
+        self.global_scheduler_lock.release()
+        return user
 
     def print_statistics(self):
 
@@ -57,37 +146,5 @@ class Scheduler(object):
         self.logger.info('\taverage_wait: %f sec', av_wait)
         self.logger.info('\taverage_task_runtime: %f sec', av_time)
         self.logger.info('\ttime of active work: %f sec', av_active)
-
-    def register_user(self, user):
-        t = Task(user)
-        self.tasks[user] = t
-
-    def unregister_user(self):
-        pass
-
-    def add_statistic_on_start(self, user, start_time):
-        self.tasks[user].sched_lock.acquire()
-        self.tasks[user].tasks_submitted.value += 1
-        self.tasks[user].last_wait.value = start_time - self.tasks[user].last_task_finished.value
-        tc = self.tasks[user].task_completed.value
-        aw = self.tasks[user].average_wait.value
-        lw = self.tasks[user].last_wait.value
-        # very simple math :)) average(n+1) = (average[n])*n + t[n+]))/(n+1)
-        self.tasks[user].average_wait.value = (aw*tc + lw)/(tc + 1.0)
-        self.tasks[user].sched_lock.release()
-
-    def add_statistics_on_finish(self, user, time, finish_time):
-        pass
-        self.tasks[user].sched_lock.acquire()
-        self.tasks[user].task_completed.value += 1
-        self.tasks[user].time.value += time
-        self.tasks[user].last_task_finished.value = finish_time
-        avr = self.tasks[user].average_runtime.value
-        tsc = self.tasks[user].task_completed.value
-        self.tasks[user].average_runtime.value = (avr*(tsc - 1.0) + time)/float(tsc)
-        self.tasks[user].sched_lock.release()
-
-    def schedule(self):
-        return self.sched_policy(self)
 
 

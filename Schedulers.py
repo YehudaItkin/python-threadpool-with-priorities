@@ -36,7 +36,7 @@ def average_wait_scheduler(self):
     user = random.randrange(len(self.tasks))
     for u, task in self.tasks.iteritems():
         if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
-            if task.average_wait.value > max_avg:
+            if task.average_wait.value >= max_avg:
                 user = u
                 max_avg = task.average_wait.value
             task.queue.order_lock.release()
@@ -56,7 +56,7 @@ def dirty_wait_scheduler(self):
     user = random.randrange(len(self.tasks))
     for u, task in self.tasks.iteritems():
         if not task.queue.q.empty() and task.queue.order_lock.acquire(False):
-            if task.dirty_wait.value > max_avg:
+            if task.dirty_wait.value >= max_avg:
                 user = u
                 max_avg = task.dirty_wait.value
             task.queue.order_lock.release()
@@ -97,11 +97,11 @@ class Task(object):
         self.tasks_submitted = Value('i', 0)
         self.task_completed = Value('i', 0)
         self.last_task_finished = Value('d', time.time())
-        self.average_wait = Value('d', random.randrange(1,10)/10.0) # the only way for average_wait_scheduler to work
+        self.average_wait = Value('d', 0.0) # the only way for average_wait_scheduler to work
         self.average_runtime = Value('d', 0.0)
         self.dirty_wait = Value('d', 0) # wait also when queue is empty
         self.av_dirty_wait = Value('d', 0) # wait also when queue is empty
-        self.last_wait = Value('d', random.randrange(1,10)/10.0)
+        self.last_wait = Value('d', 0.0)
         self.priority = Value('d', 0.0)
 
 

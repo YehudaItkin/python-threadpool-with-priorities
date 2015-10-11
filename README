@@ -1,5 +1,5 @@
 # python-threadpool-with-priorities
-Realisation of very simple ThreadPool with priorities
+Python Realisation of very simple ThreadPool with priorities
 Several scheduling polices are available
 User tasks are started or one by one (single_task queue policy) or many at once (multi_task queue policy)
 Scheduler is not preemptive (task cannot be send to sleep)
@@ -10,10 +10,10 @@ minimum average wait time (i.e time between task put in queue and the time it be
 For now, there are:
 1) random_scheduler - choose random user
 2) average_runtime_scheduler - choose user with min average runtime
-3) average_wait_scheduler - choose user with max wait
+3) average_wait_scheduler - choose user with max wait.
 4) max_waittime_scheduler - choose user with a longest wait
-5) dirty_wait_scheduler - very close to max_waittime_scheduler, but counters updated on every iteration. I think its
-the best one.
+5) dirty_wait_scheduler - very close to max_waittime_scheduler, but counters updated on every iteration. from my experince
+its the best one.
 Those polices are not optimal (for a best result, several factors should be accounted), but its interesting to
 compare them.
 Task is chosen in O(n), that should be problem, when number of users is big
@@ -37,7 +37,7 @@ SINGLE_TASK_POLICY (one by one)
     average_wait: 3.499203 sec
 
 3)max_waittime_scheduler
-    average_wait: 3.505503 sec
+    average_wait: 4.882710 sec
 
 4) max_waittime_scheduler
     average_wait: 3.745365 sec

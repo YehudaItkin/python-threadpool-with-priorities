@@ -9,7 +9,7 @@ from ThreadPool import ThreadPool
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='ThreadPool parser')
     parser.add_argument('-u', '--number_of_users', type=int, default=10)
-    parser.add_argument('-p', '--number_of_process', type=int, default=20)
+    parser.add_argument('-p', '--number_of_process', type=int, default=5)
     parser.add_argument('--scheduler_policy', choices=sched_policies.keys(), default='default')
     parser.add_argument('--queue_policy', choices=['single_task', 'multi_task'], default='single_task')
     parser.add_argument('--user_lifetime', type=float, default=60.0)
@@ -20,8 +20,8 @@ if __name__ == '__main__':
     sched_policy = args.scheduler_policy
     queue_policy = args.queue_policy
 
-    sched_policy = 'dirty_wait_scheduler'
-    queue_policy = 'multi_task'
+    sched_policy = 'average_wait_scheduler'
+    queue_policy = 'single_task'
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%d/%m/%y %H:%M')

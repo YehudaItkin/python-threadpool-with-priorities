@@ -1,4 +1,6 @@
 # python-threadpool-with-priorities
+Use TP_main.py -h, to get help
+
 Python Realisation of very simple ThreadPool with priorities
 Several scheduling polices are available
 User tasks are started or one by one (single_task queue policy) or many at once (multi_task queue policy)
@@ -75,7 +77,10 @@ MULTI_TASK_POLICY (many task at once)
     difference between fastest and slowest procs: 8.186353 sec
 
     Result is a little bit funny - random sched. is the faster one. May be its because random scheduler doesnt
-    use locks.
+    use locks.  May be in this case the better solution is to use preemptive scheduling or (if you are lazy) cgroups
+
+
+
 
 p.s. most of code was written between 2 and 5 am. So this code can crash your car, kill your dog or drink your beer.
 Well, I really cant imagine what else it can do

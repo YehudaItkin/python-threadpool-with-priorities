@@ -1,2 +1,3 @@
 1) Move scheduler to its own thread
 2) Dinamical user add/remove
+3) Time of weight calculation is not optimal (or not right) in the case of multi_task  

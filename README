@@ -77,7 +77,8 @@ MULTI_TASK_POLICY (many task at once)
     difference between fastest and slowest procs: 8.186353 sec
 
     Result is a little bit funny - random sched. is the faster one. May be its because random scheduler doesnt
-    use locks.  May be in this case the better solution is to use preemptive scheduling or (if you are lazy) cgroups
+    use locks.  The second reasopn - too may run of sched. updates. Scheduller have to run in its own thread. 
+    May be in this case the better solution is to use preemptive scheduling or (if you are lazy) cgroups
 
 
 
